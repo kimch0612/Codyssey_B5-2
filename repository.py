@@ -90,3 +90,13 @@ class Repository:
             raise ValueError("이미 존재하는 브랜치 이름입니다.")
         
         self.branches[branch_name] = self.branches[self.head]
+
+    def switch_branch(self, branch_name: str) -> None:
+        """HEAD를 지정한 브랜치로 전환한다."""
+        if self.current_user is None:
+            raise ValueError("Repository가 초기화되지 않았습니다.")
+
+        if branch_name not in self.branches:
+            raise ValueError("존재하지 않는 브랜치로 전환을 시도했습니다.")
+        
+        self.head = branch_name
