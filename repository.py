@@ -6,7 +6,18 @@ class Repository:
     """커밋 저장소와 저장소의 현재 상태를 관리한다."""
 
     def __init__(self) -> None:
+        self._commit_counter: int = 0
         self.commits: dict[str, Commit] = {} # 키는 커밋 ID, 값은 Commit 객체
+
+    def _generate_commit_hash(self) -> str:
+        """현재 세션에서 사용하지 않은 커밋 ID를 생성해 반환한다."""
+        _commit_id_prefix = "CI_"
+
+        while True:
+            tmp_commit_id = _commit_id_prefix + str(self._commit_counter)
+            self._commit_counter += 1
+            if tmp_commit_id not in self.commits:
+                return tmp_commit_id
 
     def store_commit(self, commit: Commit) -> None:
         """커밋을 저장한다. 이미 사용 중인 ID는 허용하지 않는다."""
