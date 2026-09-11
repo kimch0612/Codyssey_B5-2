@@ -1,5 +1,8 @@
 # 저장소 상태, 초기화, 커밋 생성, 브랜치 생성·전환, 조회 기능 연결 담당
+from datetime import datetime
+
 from commit import Commit
+from index import CommitIndex
 
 
 class Repository:
@@ -11,6 +14,7 @@ class Repository:
         self.branches: dict[str, str | None] = {} # 각 브랜치가 가리키는 커밋 ID
         self.head: str | None = None # 현재 브랜치 이름
         self.current_user: str | None = None
+        self.commit_index: CommitIndex = CommitIndex() # 역색인 객체
 
     def _generate_commit_hash(self) -> str:
         """현재 세션에서 사용하지 않은 커밋 ID를 생성해 반환한다."""
@@ -45,3 +49,26 @@ class Repository:
             return self.commits[commit_hash]
         
         raise ValueError("존재하지 않는 커밋 ID를 찾으려 했습니다.")
+
+    def create_commit(self, message: str) -> Commit:
+        """커밋을 생성하고 저장소·현재 브랜치·역색인을 갱신한다."""
+        if self.current_user is None:
+            raise ValueError("Repository가 초기화되지 않았습니다.")
+        
+        commit_id = self._generate_commit_hash()
+        parents = self.branches[self.head]
+
+        if parents is None: # {"main": None} 인 상태 (Repo가 초기화 된 이후에 아무런 커밋이 없는 상태)
+            parents = []    # 최초 커밋이므로 부모가 읎다
+        else:
+            parents = [parents] # 현재 최신 상태(HEAD)를 부모로 지정
+        
+        new_commit = Commit(
+            commit_hash = commit_id,
+            message = message,
+            author = self.current_user,
+            timestamp = datetime.now(),
+            parents = parents
+        )
+
+        return new_commit
