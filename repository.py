@@ -71,4 +71,7 @@ class Repository:
             parents = parents
         )
 
+        self.store_commit(new_commit)
+        self.branches[self.head] = new_commit.hash
+
         return new_commit
