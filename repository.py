@@ -71,7 +71,8 @@ class Repository:
             parents = parents
         )
 
-        self.store_commit(new_commit)
-        self.branches[self.head] = new_commit.hash
+        self.store_commit(new_commit) # ID -> Commit 객체를 저장
+        self.branches[self.head] = new_commit.hash # 현재 브랜치 -> 새 커밋 ID 연결
+        self.commit_index.add_commit(new_commit) # 작성자와 키워드 색인 갱신
 
         return new_commit
