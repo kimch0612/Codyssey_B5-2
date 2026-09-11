@@ -36,6 +36,8 @@ class Repository:
         self.branches["main"] = None # main 브랜치는 있지만 아직 커밋이 없어요
         self.head = "main"
 
+# ///////////////////////// Commit Section /////////////////////////
+
     def store_commit(self, commit: Commit) -> None:
         """커밋을 저장한다. 이미 사용 중인 ID는 허용하지 않는다."""
         if commit.hash in self.commits:
@@ -76,3 +78,15 @@ class Repository:
         self.commit_index.add_commit(new_commit) # 작성자와 키워드 색인 갱신
 
         return new_commit
+
+# ///////////////////////// Branch Section /////////////////////////
+
+    def create_branch(self, branch_name: str) -> None:
+        """현재 HEAD 커밋을 가리키는 새 브랜치를 생성한다."""
+        if self.current_user is None: # 여기서도 이게 필요할까?
+            raise ValueError("Repository가 초기화되지 않았습니다.")
+
+        if branch_name in self.branches:
+            raise ValueError("이미 존재하는 브랜치 이름입니다.")
+        
+        self.branches[branch_name] = self.branches[self.head]
