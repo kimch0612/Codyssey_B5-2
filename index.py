@@ -28,3 +28,11 @@ class CommitIndex:
             return set()
         
         return self.author_index[author]
+
+    def find_by_keyword(self, keyword:str) -> set[str]:
+        """단일 키워드에 연결된 커밋 ID 집합을 반환한다."""
+        keyword = keyword.lower()
+        
+        if keyword not in self.keyword_index.keys():
+            return set()
+        return self.keyword_index[keyword]
