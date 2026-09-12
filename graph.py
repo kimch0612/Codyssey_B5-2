@@ -1,4 +1,6 @@
 # 부모 우선 순서, 조상 탐색, 최단 경로 탐색 담당
+# 이 파일에 있는 기능들은 자료구조랑 직접적인 연관이 있어서 그런가, 이해가 잘 안 됨
+# 평가 받기 전에 다시 리마인드 및 재공부가 필요할 것 같음
 from commit import Commit
 
 
@@ -23,6 +25,22 @@ def find_ancestors(
                 parent_set.add(parent)
 
     return parent_set
-    
-    # 내용 이해가 잘 안 됨
-    # 나중에 DFS, BFS 공부하면서 다시 살펴봐야 할 것 같음
+
+def build_children_map(
+    commits: dict[str, Commit],
+) -> dict[str, list[str]]:
+    """각 커밋 ID를 직접 자식 ID 목록에 연결하며, 자식이 없으면 빈 목록을 둔다."""
+    result: dict[str, list[str]] = {}
+
+    # 1. 모든 커밋의 자식 목록을 먼저 준비한다.
+    # 다른 커밋의 부모로 등장하지 않는 커밋도 결과에 포함된다.
+    for commit_id in commits:
+        result[commit_id] = []
+
+    # 2. 자식의 부모 정보를 읽고, 부모의 자식 목록에 연결을 추가한다.
+    # 예: B의 부모가 A라면 result["A"]에 "B"를 추가한다.
+    for commit in commits.values():
+        for parent_id in commit.parents:
+            result[parent_id].append(commit.hash)
+
+    return result
