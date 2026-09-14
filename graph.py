@@ -45,6 +45,20 @@ def build_children_map(
 
     return result
 
+def build_neighbors_map(
+    commits: dict[str, Commit],
+) -> dict[str, list[str]]:
+    """각 커밋 ID를 PATH에서 이동 가능한 부모·자식 ID 목록에 연결한다."""
+    children = build_children_map(commits)
+    neighbors: dict[str, list[str]] = {}
+
+    for hash, commit in commits.items():
+        parents_list = list(commit.parents)
+        children_list = children[hash]
+        neighbors[hash] = parents_list + children_list
+
+    return neighbors
+
 def build_parent_counts(
     commits: dict[str, Commit],
 ) -> dict[str, int]:

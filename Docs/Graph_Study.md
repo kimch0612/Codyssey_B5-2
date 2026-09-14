@@ -1303,6 +1303,44 @@ PATH에는 서로 다른 세 문제가 들어 있다.
 
 `build_children_map()`의 결과를 활용하면, 부모를 찾기 위해 기존 `parents`를 읽고 자식을 찾기 위해 자식 표를 읽을 수 있다. 노드를 하나 처리할 때마다 전체 저장소를 훑어 자식을 다시 찾는 일을 피할 수 있다.
 
+#### 12.2.1 현재 ID의 직접 자식을 가져와 추가한다는 뜻
+
+예를 들어 B 커밋의 부모가 A이고 자식이 D라고 하자. 저장된 `Commit` 객체와 `build_children_map()`의 결과는 서로 반대 방향의 정보를 준다.
+
+```text
+commits["B"].parents == ["A"]
+children["B"] == ["D"]
+```
+
+현재 반복에서 `commit_id`가 `"B"`, `commit`이 B의 `Commit` 객체라면 각 값과 타입은 다음과 같다.
+
+| 표현 | 실제 값 | 타입 | 의미 |
+| --- | --- | --- | --- |
+| `commit_id` | `"B"` | `str` | 지금 이웃 목록을 만들 커밋 ID |
+| `commit` | B의 메타데이터를 가진 객체 | `Commit` | 지금 처리 중인 커밋 객체 |
+| `commit.parents` | `["A"]` | `list[str]` | B에서 부모 방향으로 갈 수 있는 ID |
+| `children[commit_id]` | `["D"]` | `list[str]` | B에서 자식 방향으로 갈 수 있는 ID |
+
+먼저 `commit.parents`를 새 리스트로 복사하면 B의 임시 이웃 목록은 `["A"]`다. 이어서 `children[commit_id]`의 각 자식 ID를 그 임시 목록에 추가하면 `["A", "D"]`가 된다. 마지막으로 이 목록을 `neighbors[commit_id]`에 저장하면 다음 결과가 생긴다.
+
+```text
+neighbors["B"] == ["A", "D"]
+```
+
+여기서 “children에서 가져온다”는 말은 `children` 딕셔너리에서 현재 ID를 키로 사용해 값을 조회한다는 뜻이다. `children["B"]`의 값은 `Commit` 객체가 아니라 자식 ID 문자열들의 리스트다.
+
+의사코드로는 다음 순서다.
+
+```text
+모든 (commit_id, Commit 객체)를 하나씩 확인한다
+    현재 Commit 객체의 부모 ID들을 새 이웃 목록에 복사한다
+    children[commit_id]에 있는 자식 ID들을 하나씩 확인한다
+        각 자식 ID를 새 이웃 목록에 추가한다
+    완성한 이웃 목록을 neighbors[commit_id]에 저장한다
+```
+
+`list`의 위치는 정수 인덱스로 접근한다. 따라서 빈 리스트를 만든 뒤 `some_list["B"] = ...`처럼 문자열 ID를 위치로 사용하면 안 된다. 문자열 ID를 키로 연결하려면 `neighbors["B"] = ...`처럼 딕셔너리를 사용한다.
+
 ### 12.3 거리는 간선 수다
 
 ```text
