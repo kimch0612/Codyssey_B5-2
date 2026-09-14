@@ -44,3 +44,13 @@ def build_children_map(
             result[parent_id].append(commit.hash)
 
     return result
+
+def build_parent_counts(
+    commits: dict[str, Commit],
+) -> dict[str, int]:
+    """각 커밋 ID를 직접 부모 수에 연결한 초기 개수 표를 반환한다."""
+    result = {}
+    for commit in commits.values():
+        result[commit.hash] = len(commit.parents)
+    
+    return result
