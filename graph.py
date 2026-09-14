@@ -54,3 +54,9 @@ def build_parent_counts(
         result[commit.hash] = len(commit.parents)
     
     return result
+
+def topological_order(
+    commits: dict[str, Commit],
+) -> list[str]:
+    """모든 부모가 자식보다 먼저 나오는 커밋 ID 순서를 반환한다."""
+    pass

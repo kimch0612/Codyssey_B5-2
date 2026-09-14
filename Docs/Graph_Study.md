@@ -1179,6 +1179,33 @@ ordered_ids = []
 
 기본 LOG에서는 A와 X 중 어느 것을 먼저 골라도 부모 우선 조건을 만족한다. 이 설명에서는 준비 목록 앞에서부터 고른다. 그 순서가 명세에 고정된 것은 아니다.
 
+#### 11.3.1 topological_order의 준비 부분 구현하기
+
+이제 두 보조 함수를 연결할 함수의 틀을 만든다. 최종 반환값은 부모 우선 순서로 나열된 커밋 ID 리스트다.
+
+```python
+def topological_order(
+    commits: dict[str, Commit],
+) -> list[str]:
+    """모든 부모가 자식보다 먼저 나오는 커밋 ID 순서를 반환한다."""
+    pass
+```
+
+첫 조각에서는 다음 상태만 준비한다. 아직 전체 순서 계산이 완료된 것은 아니다.
+
+| 변수 | 준비할 내용 |
+| --- | --- |
+| `children` | `build_children_map(commits)`의 결과 |
+| `remaining_parents` | `build_parent_counts(commits)`의 결과 |
+| `ready` | 남은 부모 수가 0인 커밋 ID들을 담은 리스트 |
+| `ordered_ids` | 아직 출력 순서를 정하지 않았으므로 빈 리스트 |
+
+`remaining_parents`는 `dict[str, int]`다. 키는 커밋 ID, 값은 부모 수인 정수다. 이미 개수를 계산했으므로 이 값을 Commit 객체처럼 다루거나 `.parents`를 다시 읽지 않는다.
+
+예를 들어 `"A": 0`을 읽으면 개수가 0이므로 ready에 **ID인 `"A"`**를 넣는다. 숫자 `0`이나 Commit 객체를 넣는 것이 아니다. 모든 항목을 살펴야 독립된 루트 X도 포함된다. 이때 아직 부모 수를 줄이거나 ordered_ids에 ID를 넣지 않는다.
+
+이 준비 조각의 확인 기준은 공통 예제에서 ready에 A·X가 있고 ordered_ids는 비어 있는 것이다. 빈 입력이면 두 표와 두 리스트가 모두 비어 있다. 최종 반환은 다음 조각의 반복 처리까지 연결한 뒤 ordered_ids를 반환하도록 완성한다.
+
 ### 11.4 커밋 하나를 처리한 뒤 하는 일
 
 A를 결과에 넣었다고 하자. A의 직접 자식은 `children["A"]`, 즉 B와 C다.
