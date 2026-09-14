@@ -59,4 +59,14 @@ def topological_order(
     commits: dict[str, Commit],
 ) -> list[str]:
     """모든 부모가 자식보다 먼저 나오는 커밋 ID 순서를 반환한다."""
-    pass
+    children: dict[str, list[str]] = {}
+    remaining_parents: dict[str, int] = {}
+    ready: list[str] = [] # 남은 부모 수가 0인 커밋 ID가 담길 예정
+    ordered_ids: list[str] = []
+
+    children = build_children_map(commits)
+    remaining_parents = build_parent_counts(commits)
+
+    for hash, count in remaining_parents.items():
+        if count == 0:
+            ready.append(hash)
