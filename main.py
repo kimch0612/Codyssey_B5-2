@@ -1,5 +1,6 @@
 # REPL, 명령 파싱, 입력 검증, 명령 실행 연결, 결과 출력 담당
 from commit import Commit
+from sorting import insertion_sort
 
 
 def format_log(
@@ -20,3 +21,14 @@ def format_log(
     
     if not result: return ""
     else: return "\n".join(result)
+
+def format_sorted_log(
+    commits: dict[str, Commit],
+    sort_by: str,
+) -> str:
+    """전체 커밋을 지정한 기준으로 정렬해 로그 문자열로 구성한다."""
+    commit_list = list(commits.values())
+    sorted_commits = insertion_sort(commit_list, sort_by)
+    sorted_hash = [c.hash for c in sorted_commits]
+    
+    return format_log(commits, sorted_hash)

@@ -396,6 +396,46 @@ def get_sort_key(commit: Commit, sort_by: str) -> datetime | str:
 
 **스스로 설명해 보기:** 선택한 알고리즘의 평균·최악 복잡도는 무엇이며, 코드에서 어떤 비교 조건이 안정성에 영향을 주는가?
 
+### 정렬 결과를 LOG 출력과 연결하기
+
+정렬 알고리즘과 로그 문자열 생성은 맡은 역할과 입출력 타입이 다르다.
+
+| 단계 | 값의 예 | 타입 | 역할 |
+| --- | --- | --- | --- |
+| 저장소의 전체 커밋 | `{"h0": h0 객체, "h1": h1 객체}` | `dict[str, Commit]` | ID로 실제 커밋 객체를 찾는 원본 저장소 |
+| 딕셔너리의 값 목록 | `[h0 객체, h1 객체]` | `list[Commit]` | 삽입 정렬에 전달할 입력 |
+| 삽입 정렬 결과 | `[h1 객체, h0 객체]` | `list[Commit]` | 날짜 또는 작성자 기준으로 순서가 정해진 객체 목록 |
+| 정렬 결과에서 꺼낸 ID | `["h1", "h0"]` | `list[str]` | `format_log()`에 전달할 출력 순서 |
+| 완성된 로그 | 여러 줄의 로그 | `str` | 나중에 CLI가 화면에 출력할 문자열 |
+
+`Repository.commits`를 그대로 순회하면 딕셔너리의 키인 ID가 나온다. 반면 `commits.values()`를 사용하면 값인 `Commit` 객체들이 나온다. `insertion_sort()`는 객체의 `timestamp`나 `author`를 읽어야 하므로 객체 목록을 받는다.
+
+기존 `format_log()`는 `commits: dict[str, Commit]`와 `ordered_ids: list[str]`를 받는다. 기본 LOG의 `topological_order()`도 ID 목록을 반환하므로, 이 함수의 입력 계약을 정렬 기능 때문에 바꿀 필요는 없다. 정렬된 `Commit` 객체들에서 `commit.hash`를 차례로 꺼내 ID 목록으로 바꾸면 같은 출력 함수를 재사용할 수 있다.
+
+전체 흐름은 다음과 같다.
+
+```text
+전체 커밋 딕셔너리
+    → 값들만 새 목록으로 만든다
+    → insertion_sort로 Commit 객체의 순서를 정한다
+    → 정렬된 각 객체에서 hash를 꺼내 ID 목록을 만든다
+    → format_log에 전체 딕셔너리와 ID 목록을 전달한다
+    → 로그 문자열을 반환한다
+```
+
+이 연결을 `main.py`의 작은 함수로 분리하면 나중에 CLI의 `LOG --sort-by=...` 처리는 그 함수를 호출하고 문자열을 출력하는 역할만 맡을 수 있다. 함수 이름은 구현 선택이지만, 예를 들어 다음 계약을 사용할 수 있다.
+
+```python
+def format_sorted_log(
+    commits: dict[str, Commit],
+    sort_by: str,
+) -> str:
+    """전체 커밋을 지정한 기준으로 정렬해 로그 문자열로 구성한다."""
+    pass
+```
+
+이 함수 안에서는 새로운 정렬 알고리즘을 작성하지 않는다. 기존 `insertion_sort()`와 `format_log()` 사이에서 입력과 결과 타입을 맞추는 연결만 담당한다. 빈 저장소에서는 객체 목록과 ID 목록이 모두 빈 목록이 되고, 기존 `format_log()`의 계약에 따라 빈 문자열이 반환된다.
+
 ## 10. 역색인과 검색
 
 **근거: Subject.txt 3장 및 4장 「역색인」·`COMMIT`·`SEARCH`**
