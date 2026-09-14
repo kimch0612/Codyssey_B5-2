@@ -36,3 +36,10 @@ class CommitIndex:
         if keyword not in self.keyword_index.keys():
             return set()
         return self.keyword_index[keyword]
+
+    def find_by_keywords(self, query: str) -> set[str]:
+        """검색어의 모든 토큰에 공통으로 연결된 커밋 ID 집합을 반환한다."""
+        # TODO 1: 검색어를 소문자 공백 토큰으로 나누고 빈 검색어를 처리한다.
+        # TODO 2: 첫 토큰의 ID 집합을 새로운 집합으로 복사한다.
+        # TODO 3: 나머지 토큰의 ID 집합과 차례로 교집합을 구해 반환한다.
+        pass
