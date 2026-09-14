@@ -91,6 +91,16 @@ class Repository:
 
         return matched_commits
 
+    def search_by_author(self, author: str) -> list[Commit]:
+        """작성자 색인으로 찾은 ID들을 실제 Commit 객체 목록으로 반환한다."""
+        matched_ids = self.commit_index.find_by_author(author)
+        matched_commits: list[Commit] = []
+
+        for id in matched_ids:
+            matched_commits.append(self.get_commit(id))
+
+        return matched_commits
+
 # ///////////////////////// Branch Section /////////////////////////
 
     def create_branch(self, branch_name: str) -> None:
