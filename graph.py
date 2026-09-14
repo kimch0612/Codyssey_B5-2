@@ -70,3 +70,15 @@ def topological_order(
     for hash, count in remaining_parents.items():
         if count == 0:
             ready.append(hash)
+
+    while ready:
+        current_id = ready.pop()
+        ordered_ids.append(current_id)
+
+        for child_id in children[current_id]:
+            remaining_parents[child_id] -= 1
+
+            if remaining_parents[child_id] == 0:
+                ready.append(child_id)
+
+    return ordered_ids
