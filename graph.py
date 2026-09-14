@@ -59,6 +59,30 @@ def build_neighbors_map(
 
     return neighbors
 
+def build_distance_map( # bfs
+    commits: dict[str, Commit],
+    start_hash: str, # "h0"
+) -> dict[str, int]:
+    """시작 커밋에서 도달 가능한 각 커밋까지의 최소 간선 수를 반환한다."""
+    if start_hash not in commits:
+        raise ValueError(f"알 수 없는 커밋 ID입니다: {start_hash}")
+
+    neighbors = build_neighbors_map(commits) # {"h0": ["h1", "h2"], ...}
+    waiting = [start_hash] # 초기상태-> ["h0"], 이웃 발견 시 append해서 ["h0", "h1", "h2"]
+    read_position = 0 # 0, 1, 2, ...
+    distance = {start_hash: 0} # {"h0": 0, "h1": 1}
+
+    while read_position < len(waiting): # 처리할 ID가 남아 있는 동안
+        current_id = waiting[read_position]
+        read_position += 1
+
+        for neighbor_id in neighbors[current_id]: # 현재 ID의 모든 이웃에 대해
+            if neighbor_id not in distance: # 처음 발견한 이웃일 때만
+                distance[neighbor_id] = distance[current_id] + 1 # 거리 기록
+                waiting.append(neighbor_id) # 대기 목록 추가
+
+    return distance
+
 def build_parent_counts(
     commits: dict[str, Commit],
 ) -> dict[str, int]:
