@@ -151,7 +151,7 @@ CLI를 연결하기 전에는 함수·객체에 작은 데이터를 직접 넣�
 
 **근거: Subject.txt 4장 「정렬 알고리즘 직접 구현」·`LOG --sort-by=date|author` / 평가 1-6·3-4**
 
-- [ ] `get_sort_key()`에서 date는 datetime 값인 timestamp, author는 작성자 문자열을 반환하도록 비교 기준을 분리한다. 학습 설명은 Study.md 9절의 「구현 연습 1」을 참고한다.
+- [x] `get_sort_key()`에서 date는 datetime 값인 timestamp, author는 작성자 문자열을 반환하도록 비교 기준을 분리한다. 학습 설명은 Study.md 9절의 「구현 연습 1」을 참고한다.
 - [ ] 사용할 정렬 알고리즘 하나를 선택해 직접 구현한다.
 - [ ] 비교 기준을 바꿀 수 있도록 구성한다.
 - [x] D4에 정렬 방향과 동률 처리 규칙을 기록한다.
