@@ -11,3 +11,23 @@ def get_sort_key(commit: Commit, sort_by: str) -> datetime | str:
         return commit.author
     else:
         raise ValueError("허용되지 않은 정렬 타입이 입력되었습니다.")
+
+def insertion_sort(
+    commits: list[Commit],
+    sort_by: str,
+) -> list[Commit]:
+    """원본 목록을 변경하지 않고 지정한 기준의 오름차순으로 정렬한다."""
+    result = list(commits)
+
+    for i in range(1, len(result)):
+        tmp_commit = result[i]
+        tmp_value = get_sort_key(tmp_commit, sort_by)
+
+        j = i - 1
+        while j >= 0 and get_sort_key(result[j], sort_by) > tmp_value: # 조건에 맞는 놈을 오른쪽으로 한칸씩 밀어내자
+            result[j + 1] = result[j]
+            j -= 1
+        
+        result[j + 1] = tmp_commit
+
+    return result
