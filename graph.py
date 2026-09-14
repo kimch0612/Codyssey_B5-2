@@ -83,6 +83,58 @@ def build_distance_map( # bfs
 
     return distance
 
+def find_shortest_path( # 나중에 추가 공부 필요
+    commits: dict[str, Commit],
+    start_hash: str,
+    end_hash: str,
+) -> list[str] | None: # 경로가 있다면 ["h0", "h1", "h3"], 없다면 None
+    """두 커밋 사이의 최단 경로 ID 목록을 반환한다."""
+    if start_hash not in commits:
+        raise ValueError(f"존재하지 않는 Start Commit ID로 조회를 시도했습니다: {start_hash}")
+    elif end_hash not in commits:
+        raise ValueError(f"존재하지 않는 End Commit ID로 조회를 시도했습니다: {end_hash}")
+
+    if start_hash == end_hash:
+        return [start_hash]
+
+    # 목표 거리 계산은 도착지를 기준으로 계산한다
+    distance = build_distance_map(commits, end_hash)
+
+    if start_hash not in distance:
+        return None # 경로에 포함되지 않았다면 고립된 커밋이므로 None 반환
+
+    neighbors = build_neighbors_map(commits) # 각 ID에서 한 번에 이동할 수 있는 부모·자식 ID 목록
+    best_suffix: dict[str, str] = {end_hash: end_hash} # 각 커밋에서 도착점까지 갈 수 있는 최단 경로 중, 사전순으로 가장 작은 전체 경로 문자열을 저장
+    next_step: dict[str, str] = {} # 각 ID에서 선택한 다음 이웃 ID
+
+    for current_id in distance:
+        if current_id == end_hash:
+            continue # 목표의 최선 경로는 best_suffix에 이미 기록되어 있다.
+
+        for neighbor_id in neighbors[current_id]:
+            # 최단 경로에서는 목표까지 남은 거리가 매번 정확히 1씩 줄어야 한다.
+            if distance[neighbor_id] != distance[current_id] - 1:
+                continue
+
+            # 예: current_id가 h0이고 neighbor_id가 h1이면 "h0->h1->h3"
+            candidate = f"{current_id}->{best_suffix[neighbor_id]}"
+
+            # 첫 후보이거나, 기존 후보보다 전체 경로 문자열이 작을 때 교체한다.
+            if current_id not in best_suffix or candidate < best_suffix[current_id]:
+                best_suffix[current_id] = candidate
+                next_step[current_id] = neighbor_id
+
+    # 선택한 다음 ID를 출발점부터 따라가 실제 경로 ID 목록을 만든다.
+    # 예: next_step이 {"h0": "h1", "h1": "h3"}이면 ["h0", "h1", "h3"]
+    path = [start_hash]
+    current_id = start_hash
+
+    while current_id != end_hash:
+        current_id = next_step[current_id]
+        path.append(current_id)
+
+    return path
+
 def build_parent_counts(
     commits: dict[str, Commit],
 ) -> dict[str, int]:
