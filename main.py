@@ -37,6 +37,35 @@ def parse_sort_option(option: str) -> str:
     else:
         raise ValueError("잘못된 옵션값이 들어왔습니다.")
 
+def validate_argument_count(parts: list[str]) -> None:
+    """명령어별 허용 인자 개수인지 검사하고, 잘못되면 ValueError를 발생시킨다."""
+    # e.g. parts = ["PATH", "CI_0", "CI_2"]
+    if not parts:
+        return
+    
+    valid_arg_counts: dict[str, set[int]] = {
+        "INIT": {1},
+        "BRANCH": {1},
+        "SWITCH": {1},
+        "COMMIT": {1},
+        "LOG": {0, 1}, # LOG만 옵션이 없는 경우와 옵션 하나가 있는 경우를 모두 허용
+        "PATH": {2},
+        "ANCESTORS": {1},
+        "SEARCH": {1},
+        "EXIT": {0},
+        "QUIT": {0},
+    }
+
+    command = parts[0]
+    arg_count = len(parts) - 1
+
+    if command not in valid_arg_counts:
+        raise ValueError("존재하지 않는 커맨드를 입력했습니다.")
+    elif arg_count not in valid_arg_counts[command]:
+        raise ValueError(f"인자의 개수가 잘못됐습니다; 입력:{arg_count}, 필요:{valid_arg_counts[command]}")
+    
+    return None
+
 def format_log(
     commits: dict[str, Commit],
     ordered_ids: list[str],
