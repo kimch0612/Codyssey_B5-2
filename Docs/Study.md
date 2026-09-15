@@ -902,6 +902,47 @@ format_log(repository.commits, matched_ids)
 객체 목록의 순서를 그대로 사용하고 별도 정렬을 추가하지 않는다. 일치하는 결과가
 없거나 초기화된 빈 저장소를 검색하면 `format_log()`가 빈 문자열을 반환한다.
 
+### REPL 정상 흐름: 하나의 저장소를 반복해서 사용하기
+
+REPL의 저장소 객체는 반복문보다 먼저 한 번만 생성해야 한다.
+
+```text
+repository = Repository()       ← 한 번 생성
+
+while 명령을 받는 중:
+    입력 → 파싱 → 실행 → 출력   ← 같은 repository를 계속 전달
+```
+
+만약 `Repository()`를 `while` 안에서 만들면 매 입력마다 새 빈 저장소가 생긴다.
+첫 번째 입력에서 INIT을 성공해도 두 번째 COMMIT을 받을 때는 새로운 객체의
+`current_user`가 다시 `None`이므로 이전 상태가 사라진다. 반대로 루프 밖의 같은
+객체를 사용하면 내부 값이 다음처럼 누적된다.
+
+| 입력 직후 | `current_user` | `head` | `commits` |
+| --- | --- | --- | --- |
+| 시작 | `None` | `None` | `{}` |
+| `INIT Alice` | `'Alice'` | `'main'` | `{}` |
+| `COMMIT "First"` | `'Alice'` | `'main'` | `{'CI_0': Commit(...)}` |
+| 다음 `LOG` | 위와 같음 | 위와 같음 | 위 커밋을 조회 가능 |
+
+한 번의 정상 반복은 `input('mini-git> ')`으로 문자열을 읽고,
+`parse_command_line()`으로 `list[str]`을 만든 뒤 `execute_command()`에 같은
+저장소 객체와 함께 전달한다. 실행 결과는 출력용 `str`이다. 빈 줄이나 검색 결과
+없음처럼 결과가 `''`이면 `print()`하지 않아야 불필요한 빈 출력 줄이 생기지 않는다.
+
+파싱 결과가 `[]`이면 빈 입력이므로 `continue`로 다음 반복으로 넘어간다.
+`parts[0]`이 `EXIT` 또는 `QUIT`이면 먼저 `validate_argument_count()`로 추가
+인자가 없는지 검사하고 `break`로 반복문을 끝낸다. 이 두 명령은 저장소 명령을
+실행하는 것이 아니라 REPL 자체를 끝내므로 `execute_command()`에 전달하지 않는다.
+
+파일 끝의 `if __name__ == '__main__':` 조건은 `python main.py`로 직접 실행할 때만
+`run_repl()`을 호출한다. 다른 검증 코드가 `from main import execute_command`처럼
+모듈을 가져올 때는 REPL이 자동으로 시작되지 않는다.
+
+이번 조각은 정상 입력 흐름까지만 구성한다. 닫히지 않은 따옴표나 잘못된 명령에서
+발생한 `ValueError`를 화면 안내로 바꾸고 다음 입력을 계속 받는 `try/except`는
+정상 흐름을 검토한 다음 조각에서 연결한다.
+
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.
 
 탐색·정렬·인덱싱을 독립된 함수 또는 클래스로 나누면, 입력을 읽는 과정과 알고리즘이 결과를 만드는 과정을 구분해서 설명할 수 있다. 엔트리 포인트 1개라는 제출 조건이 모든 로직을 한 함수에 넣으라는 뜻은 아니다. 특정 클래스 수나 파일 수는 명세에서 정하지 않는다.

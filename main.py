@@ -199,3 +199,24 @@ def format_sorted_log(
     sorted_hash = [c.hash for c in sorted_commits]
     
     return format_log(commits, sorted_hash)
+
+def run_repl() -> None:
+    """하나의 저장소에서 명령을 반복해서 입력받고 실행한다."""
+    repository = Repository()
+
+    while True:
+        line = input("mini-git> ")
+        parts = parse_command_line(line)
+
+        if parts == []:
+            continue
+        elif parts[0] in ("EXIT", "QUIT"):
+            validate_argument_count(parts)
+            break
+        else:
+            result = execute_command(repository, parts)
+            if result:
+                print(result)
+
+if __name__ == "__main__":
+    run_repl()
