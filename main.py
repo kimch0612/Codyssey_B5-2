@@ -2,7 +2,7 @@
 import shlex
 
 from commit import Commit
-from graph import topological_order
+from graph import find_shortest_path, topological_order
 from repository import Repository
 from sorting import insertion_sort
 
@@ -120,6 +120,19 @@ def execute_command(repository: Repository, parts: list[str]) -> str:
         else:
             sort_type = parse_sort_option(parts[1])
             return format_sorted_log(repository.commits, sort_type)
+
+    if command == "PATH":
+        if repository.current_user is None:
+            raise ValueError("Repository가 초기화되지 않았습니다.")
+
+        origin, dest = parts[1], parts[2]
+        result = find_shortest_path(repository.commits, origin, dest)
+
+        if result is None:
+            return "No path"
+        else:
+            path_str = "Path: " + " -> ".join(result)
+            return path_str
 
     raise NotImplementedError("아직 연결하지 않은 명령입니다.")
 
