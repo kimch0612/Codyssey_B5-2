@@ -10,7 +10,7 @@ def find_ancestors(
 ) -> set[str]:
     """부모 방향으로 도달 가능한 모든 조상의 ID를 반환한다."""
     if commit_hash not in commits:
-        raise ValueError("존재하지 않는 커밋 ID로 부모를 찾으려 했습니다.")
+        raise ValueError(f"존재하지 않는 커밋 ID입니다: {commit_hash}")
     
     start_commit = commits[commit_hash]
     parent_list = list(start_commit.parents) # 발견했지만, 이 커밋의 부모들은 아직 확인하지 않은 ID 목록

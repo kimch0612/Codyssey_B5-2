@@ -2,7 +2,7 @@
 import shlex
 
 from commit import Commit
-from graph import find_shortest_path, topological_order
+from graph import find_ancestors, find_shortest_path, topological_order
 from repository import Repository
 from sorting import insertion_sort
 
@@ -133,6 +133,20 @@ def execute_command(repository: Repository, parts: list[str]) -> str:
         else:
             path_str = "Path: " + " -> ".join(result)
             return path_str
+
+    if command == "ANCESTORS":
+        if repository.current_user is None:
+            raise ValueError("Repository가 초기화되지 않았습니다.")
+        
+        target_hash = parts[1]
+        ancestor_ids = find_ancestors(repository.commits, target_hash)
+
+        ordered_ids = []
+        for commit_id in repository.commits:
+            if commit_id in ancestor_ids:
+                ordered_ids.append(commit_id)
+        
+        return format_log(repository.commits, ordered_ids)
 
     raise NotImplementedError("아직 연결하지 않은 명령입니다.")
 
