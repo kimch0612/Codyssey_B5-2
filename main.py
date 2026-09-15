@@ -163,8 +163,7 @@ def execute_command(repository: Repository, parts: list[str]) -> str:
         
         commit_id_list = []
         for commit in commit_list:
-            if commit.hash not in commit_id_list:
-                commit_id_list.append(commit.hash)
+            commit_id_list.append(commit.hash)
 
         return format_log(repository.commits, commit_id_list)
 
