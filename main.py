@@ -22,7 +22,20 @@ def parse_author_option(option: str) -> str:
             raise ValueError("이름이 비어있습니다.")
         return author
     else:
-        raise ValueError("잘못된 옵션값이 들어왔습니다.. 이게 가능한 일인가?")
+        raise ValueError("잘못된 옵션값이 들어왔습니다.")
+
+def parse_sort_option(option: str) -> str:
+    """`--sort-by=date|author` 옵션에서 유효한 정렬 기준을 반환한다."""
+    prefix = '--sort-by='
+    if option.startswith(prefix):
+        sort_type = option[len(prefix):]
+        if not sort_type.strip():
+            raise ValueError("정렬 기준값이 비었습니다.")
+        elif sort_type not in ["date", "author"]:
+            raise ValueError("잘못된 정렬 기준값이 들어왔습니다.")
+        return sort_type
+    else:
+        raise ValueError("잘못된 옵션값이 들어왔습니다.")
 
 def format_log(
     commits: dict[str, Commit],

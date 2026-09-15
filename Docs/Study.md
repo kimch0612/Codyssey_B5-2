@@ -619,6 +619,23 @@ author: 'Alice Kim'           (str)
 REPL 계층에서 옵션 파싱의 `ValueError`를 잡아 `Invalid args`처럼 일관된 문구를
 출력하면 된다. 내부 예외 문구와 최종 CLI 출력 문구를 같은 것으로 간주하지 않는다.
 
+`LOG --sort-by=date`도 같은 접두사 추출 방식을 사용한다. 파싱 후 두 번째
+토큰 `--sort-by=date`에서 접두사 `--sort-by=` 뒤를 잘라 `date`를 얻는다.
+작성자 옵션과 다른 점은 자유로운 이름을 받는 것이 아니라 허용 값이 두 개로
+제한된다는 점이다.
+
+```text
+option: '--sort-by=date'       (str)
+                     ↓ 접두사 뒤 추출
+sort_by: 'date'                (str)
+allowed: {'date', 'author'}    (set[str])
+```
+
+추출한 `sort_by`가 `date` 또는 `author`이면 반환하고, 빈 값·다른 값·잘못된
+접두사는 `ValueError`로 거부한다. 예를 들어 `--sort-by=message`,
+`--sort-by=`, `--sort=date`는 명세에 없는 형식이다. 명령어의 대소문자 무시를
+옵션 값에 확대하지 않으므로 `--sort-by=DATE`도 거부한다.
+
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.
 
 탐색·정렬·인덱싱을 독립된 함수 또는 클래스로 나누면, 입력을 읽는 과정과 알고리즘이 결과를 만드는 과정을 구분해서 설명할 수 있다. 엔트리 포인트 1개라는 제출 조건이 모든 로직을 한 함수에 넣으라는 뜻은 아니다. 특정 클래스 수나 파일 수는 명세에서 정하지 않는다.
