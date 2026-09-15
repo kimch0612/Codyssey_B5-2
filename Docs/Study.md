@@ -700,6 +700,39 @@ Subject.txt의 결과 예시는 참고 문구이므로 똑같이 복사할 필�
 `NotImplementedError`를 사용한다. 이것은 최종 CLI 동작이 아니며 모든 명령 연결이
 끝나면 남아 있지 않아야 한다.
 
+### BRANCH와 SWITCH 연결
+
+두 명령은 모두 `parts[1]`에서 브랜치 이름 문자열을 꺼내지만 변경하는 상태가
+다르다. `execute_command()`가 `repository.branches`나 `repository.head`를 직접
+바꾸지 않고 기존 Repository 메서드를 호출해야 이 규칙이 한곳에 유지된다.
+
+```text
+BRANCH feature
+→ repository.create_branch('feature')
+→ 현재 HEAD 커밋을 가리키는 feature 항목 추가
+→ 현재 repository.head는 바뀌지 않음
+
+SWITCH feature
+→ repository.switch_branch('feature')
+→ repository.head만 'feature'로 변경
+→ 커밋이나 브랜치 위치는 바뀌지 않음
+```
+
+예를 들어 main이 `CI_0`을 가리키는 상태에서 BRANCH를 실행하면 다음과 같다.
+
+| 시점 | `branches` | `head` |
+| --- | --- | --- |
+| 실행 전 | `{'main': 'CI_0'}` | `'main'` |
+| `BRANCH feature` 후 | `{'main': 'CI_0', 'feature': 'CI_0'}` | `'main'` |
+| `SWITCH feature` 후 | 동일 | `'feature'` |
+
+두 명령의 이름이 빈 문자열이나 공백뿐이면 `ValueError`로 거부한다. 성공 결과는
+각각 `Created branch: feature`, `Switched to branch: feature`처럼 대상 이름을
+포함한 문자열로 반환할 수 있다. 중복 생성·초기화 전 실행·없는 브랜치 전환은
+Repository 메서드가 상태 변경 전에 `ValueError`로 거부하므로 같은 검사를
+명령 실행 함수에 다시 작성할 필요는 없다. 사용자에게 보여 줄 최종 오류 문구에
+대상 브랜치 이름을 넣는 작업은 REPL 오류 처리 단계에서 연결한다.
+
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.
 
 탐색·정렬·인덱싱을 독립된 함수 또는 클래스로 나누면, 입력을 읽는 과정과 알고리즘이 결과를 만드는 과정을 구분해서 설명할 수 있다. 엔트리 포인트 1개라는 제출 조건이 모든 로직을 한 함수에 넣으라는 뜻은 아니다. 특정 클래스 수나 파일 수는 명세에서 정하지 않는다.

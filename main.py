@@ -85,6 +85,22 @@ def execute_command(repository: Repository, parts: list[str]) -> str:
         repository.initialize(user_name)
         return f"Initialized repository.\nCurrent branch: {repository.head}\nCurrent user: {repository.current_user}"
 
+    if command == "BRANCH":
+        branch_name = parts[1]
+        if not branch_name.strip():
+            raise ValueError("브랜치 이름이 비어있습니다.")
+
+        repository.create_branch(branch_name)
+        return f"Created branch: {branch_name}"
+
+    if command == "SWITCH":
+        branch_name = parts[1]
+        if not branch_name.strip():
+            raise ValueError("브랜치 이름이 비어있습니다.")
+        
+        repository.switch_branch(branch_name)
+        return f"Branch switched: {repository.head}"
+
     raise NotImplementedError("아직 연결하지 않은 명령입니다.")
 
 def format_log(
