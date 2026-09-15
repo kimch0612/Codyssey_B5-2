@@ -2,6 +2,7 @@
 import shlex
 
 from commit import Commit
+from repository import Repository
 from sorting import insertion_sort
 
 
@@ -65,6 +66,26 @@ def validate_argument_count(parts: list[str]) -> None:
         raise ValueError(f"인자의 개수가 잘못됐습니다; 입력:{arg_count}, 필요:{valid_arg_counts[command]}")
     
     return None
+
+def execute_command(repository: Repository, parts: list[str]) -> str:
+    """파싱된 명령 하나를 저장소 기능에 연결하고 출력용 문자열을 반환한다."""
+    # e.g. parts = ["INIT", "Alice Kim"]
+    validate_argument_count(parts)
+
+    if not parts:
+        return ""
+
+    command = parts[0]
+
+    if command == "INIT":
+        user_name = parts[1]
+        if not user_name.strip():
+            raise ValueError("사용자 이름이 비어 있습니다.")
+            
+        repository.initialize(user_name)
+        return f"Initialized repository.\nCurrent branch: {repository.head}\nCurrent user: {repository.current_user}"
+
+    raise NotImplementedError("아직 연결하지 않은 명령입니다.")
 
 def format_log(
     commits: dict[str, Commit],

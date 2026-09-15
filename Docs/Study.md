@@ -662,6 +662,44 @@ allowed: {'date', 'author'}    (set[str])
 딕셔너리에 없거나 실제 인자 개수가 허용 집합에 없으면 내부 `ValueError`를
 발생시키고, CLI 계층에서 일관된 입력 오류 안내로 바꾼다.
 
+### 명령 실행 연결의 시작: INIT
+
+파싱과 인자 검사가 끝난 `parts`를 실제 저장소 기능에 연결하는 함수는
+`Repository` 객체와 토큰 목록을 입력받는다. 함수가 직접 `print()`하기보다
+출력용 문자열을 반환하면 REPL 없이도 결과를 확인하기 쉽고, REPL은 나중에
+그 문자열을 출력하는 책임만 맡을 수 있다.
+
+```text
+parts: ['INIT', 'Alice']       list[str]
+repository: Repository 객체
+             ↓ execute_command()
+repository.initialize('Alice')
+             ↓
+result: 초기화 결과 문자열     str
+```
+
+`parts[0]`은 명령어 `INIT`, `parts[1]`은 사용자 이름 `Alice`다. 사용자 이름이
+빈 문자열이거나 공백뿐이면 `INIT <user_name>`의 실제 값이 없으므로 `ValueError`로
+거부한다. 유효하면 기존 `Repository.initialize()`를 호출한다.
+
+초기화 전후 저장소 상태는 다음과 같다.
+
+| 속성 | 호출 전 | `initialize('Alice')` 호출 후 |
+| --- | --- | --- |
+| `repository.branches` | `{}` | `{'main': None}` |
+| `repository.head` | `None` | `'main'` |
+| `repository.current_user` | `None` | `'Alice'` |
+
+성공 결과 문자열에는 명세가 식별하도록 요구하는 현재 브랜치와 사용자를 넣는다.
+Subject.txt의 결과 예시는 참고 문구이므로 똑같이 복사할 필요는 없지만, 예를 들어
+`Initialized repository.`, `Current branch: main`, `Current user: Alice`를 줄바꿈으로
+연결할 수 있다. 반복 INIT은 기존 `Repository.initialize()`가 `ValueError`로
+거부하므로 실행 함수에서 같은 상태 검사를 다시 작성하지 않는다.
+
+명령 실행 함수를 단계적으로 만드는 동안 아직 연결하지 않은 유효 명령에는 임시로
+`NotImplementedError`를 사용한다. 이것은 최종 CLI 동작이 아니며 모든 명령 연결이
+끝나면 남아 있지 않아야 한다.
+
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.
 
 탐색·정렬·인덱싱을 독립된 함수 또는 클래스로 나누면, 입력을 읽는 과정과 알고리즘이 결과를 만드는 과정을 구분해서 설명할 수 있다. 엔트리 포인트 1개라는 제출 조건이 모든 로직을 한 함수에 넣으라는 뜻은 아니다. 특정 클래스 수나 파일 수는 명세에서 정하지 않는다.
