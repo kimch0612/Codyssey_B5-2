@@ -862,6 +862,46 @@ CI_0 → CI_1 → CI_2 → CI_3
 `find_ancestors()`의 `ValueError`이며, 초기화 전 ANCESTORS도 먼저 `ValueError`로
 거부한다.
 
+### SEARCH 명령 연결
+
+SEARCH의 CLI 인자는 한 개지만 두 가지 의미를 가질 수 있다.
+
+| 파싱된 인자 | 분류 | 호출할 메서드 |
+| --- | --- | --- |
+| `login` | 키워드 | `repository.search_by_keywords('login')` |
+| `login feature` | 여러 토큰의 AND 키워드 | `repository.search_by_keywords('login feature')` |
+| `--author=Alice` | 작성자 옵션 | `repository.search_by_author('Alice')` |
+
+`SEARCH "login feature"`는 `shlex.split()`을 거쳐
+`['SEARCH', 'login feature']`가 된다. `parts[1]`은 공백을 포함하지만 하나의
+문자열이고, `search_by_keywords()`가 다시 `lower().split()`하여 두 토큰의 색인
+집합을 교집합으로 합친다.
+
+인자가 `--`로 시작하면 일반 키워드로 넘기지 않고 `parse_author_option()`으로
+형식을 검사한다. 따라서 `--author=Alice`는 Alice를 꺼내 작성자 검색을 하고,
+`--sort-by=date`처럼 SEARCH에 허용되지 않은 옵션은 `ValueError`가 된다. 일반
+키워드와 작성자 이름이 비어 있는 입력도 `ValueError`로 거부한다.
+
+두 Repository 검색 메서드의 반환값은 `list[Commit]`이다. 예를 들어 다음과 같다.
+
+```text
+matched_commits
+└─ [Commit(hash='CI_0', ...), Commit(hash='CI_2', ...)]
+
+각 Commit 객체의 hash를 꺼냄
+└─ matched_ids: ['CI_0', 'CI_2']  # list[str]
+
+format_log(repository.commits, matched_ids)
+└─ 각 커밋의 hash·author·timestamp·message를 포함한 str
+```
+
+검색 결과 순서는 명세에서 정하지 않는다. 색인은 후보 ID 집합만 빠르게 찾으며,
+현재 Repository 메서드는 그 후보에 해당하는 객체만 조회한다. 화면 순서를 새로
+정한다는 이유로 전체 `repository.commits`를 다시 순회하면 결과가 적을 때도 모든
+커밋을 확인하게 되어 역색인의 목적을 약화시킨다. 따라서 이번 연결에서는 검색된
+객체 목록의 순서를 그대로 사용하고 별도 정렬을 추가하지 않는다. 일치하는 결과가
+없거나 초기화된 빈 저장소를 검색하면 `format_log()`가 빈 문자열을 반환한다.
+
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.
 
 탐색·정렬·인덱싱을 독립된 함수 또는 클래스로 나누면, 입력을 읽는 과정과 알고리즘이 결과를 만드는 과정을 구분해서 설명할 수 있다. 엔트리 포인트 1개라는 제출 조건이 모든 로직을 한 함수에 넣으라는 뜻은 아니다. 특정 클래스 수나 파일 수는 명세에서 정하지 않는다.

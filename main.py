@@ -148,6 +148,26 @@ def execute_command(repository: Repository, parts: list[str]) -> str:
         
         return format_log(repository.commits, ordered_ids)
 
+    if command == "SEARCH":
+        if repository.current_user is None:
+            raise ValueError("Repository가 초기화되지 않았습니다.")
+        elif not parts[1].strip():
+            raise ValueError("검색 키워드가 비어있습니다.")
+        search_data = parts[1]
+
+        if search_data.startswith('--'):
+            author = parse_author_option(search_data)
+            commit_list = repository.search_by_author(author)
+        else:
+            commit_list = repository.search_by_keywords(search_data)
+        
+        commit_id_list = []
+        for commit in commit_list:
+            if commit.hash not in commit_id_list:
+                commit_id_list.append(commit.hash)
+
+        return format_log(repository.commits, commit_id_list)
+
     raise NotImplementedError("아직 연결하지 않은 명령입니다.")
 
 def format_log(
