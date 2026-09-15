@@ -1,0 +1,202 @@
+B5-2 Mini Git 평가 리허설
+작성 기준: Subject.txt / evaluate.txt / 현재 구현 (Git 75e37f5)
+기준 폴더: /Users/charles/Documents/Dev/Codyssey/Subject5/B5-2
+기준일: 2026-09-15. 코드가 바뀌면 아래 함수 이름으로 다시 찾아 라인을 확인한다.
+
+[사용법]
+이 파일은 입력만 빠르게 찾는 목록이다. 의미와 예상 결과는 demo.txt에 있다.
+[셸]은 운영체제 터미널, [REPL]은 mini-git>, [Python]은 >>> 입력이다.
+번호, 제목, 설명, 프롬프트 표시는 입력하지 않는다. 명령 줄만 입력한다.
+이 파일 전체를 셸 스크립트로 실행하거나 main.py에 통째로 리다이렉트하지 않는다.
+각 D 명령은 새 REPL에서 순서대로 한 번씩 실행한다. 다시 시작하려면 exit 후 재실행한다.
+
+================================================================
+0. 발표 시작 전: 보조 터미널 T2의 내부 검증 데이터 준비
+================================================================
+[셸: T2] 아래 두 줄을 순서대로 입력한다.
+cd /Users/charles/Documents/Dev/Codyssey/Subject5/B5-2
+python3 -B
+
+[Python: T2] 아래 줄을 하나씩 입력한다. 준비 후 >>> 상태로 대기한다.
+from datetime import datetime, timedelta
+from commit import Commit
+from graph import topological_order, find_shortest_path, find_ancestors
+from sorting import insertion_sort
+from index import CommitIndex
+t0 = datetime(2024, 1, 1, 9, 0, 0)
+items = []
+items.append(Commit("h0", "Initial commit", "Zoe", t0 + timedelta(minutes=1), []))
+items.append(Commit("h1", "Add login feature", "Alice", t0 + timedelta(minutes=3), ["h0"]))
+items.append(Commit("h2", "Fix login", "Bob", t0 + timedelta(minutes=2), ["h0"]))
+items.append(Commit("h3", "Ship login login", "Alice", t0 + timedelta(minutes=4), ["h1", "h2"]))
+items.append(Commit("hx", "Separate history", "Evan", t0, []))
+commits = {c.hash: c for c in items}
+index = CommitIndex()
+index.add_commit(items[0])
+index.add_commit(items[1])
+index.add_commit(items[2])
+index.add_commit(items[3])
+index.add_commit(items[4])
+
+여기서 h0…hx는 임시 검증 데이터다. merge 명령으로 만든 커밋이 아니다.
+
+================================================================
+1. 본 시연: 터미널 T1
+================================================================
+[셸: T1]
+cd /Users/charles/Documents/Dev/Codyssey/Subject5/B5-2
+python3 -B main.py
+
+[D01 | P02 | REPL] 초기화
+init "Alice Kim"
+
+[D02 | P02 | REPL] 빈 브랜치 보존
+branch archive
+
+[D03 | P03 | REPL] 루트 생성
+CoMmIt "Initial commit"
+
+[D04 | P03 | REPL] 현재 커밋에서 분기
+branch feature
+
+[D05 | P03 | REPL] 작업 브랜치 전환
+switch feature
+
+[D06 | P03 | REPL] feature의 첫 커밋
+commit "Add LOGIN feature"
+
+[D07 | P03 | REPL] 이력을 한 단계 연장
+commit "Fix login"
+
+[D08 | P03 | REPL] main으로 복귀
+switch main
+
+[D09 | P03 | REPL] main의 별도 변경
+commit "Add payment feature"
+
+[D10 | P05 | REPL] 부모 우선 로그
+log
+
+[D11 | P06 | REPL] 가지 사이 최단 경로
+path CI_2 CI_3
+
+[D12 | P06 | REPL] 조상 탐색
+ancestors CI_2
+
+[D13 | P07 | REPL] 대소문자 정규화 검색
+search LOGIN
+
+[D14 | P07 | REPL] 여러 토큰 AND 검색
+search "login feature"
+
+[D15 | P07 | REPL] 공백 있는 작성자 검색
+search --author="Alice Kim"
+
+[D16 | P08 | REPL] 빈 브랜치로 전환
+switch archive
+
+[D17 | P08 | REPL] 분리된 루트 생성
+commit "Separate history"
+
+[D18 | P08 | REPL] 연결되지 않은 두 커밋
+path CI_0 CI_4
+
+[D19 | P08 | REPL] 자기 자신으로 가는 경로
+path CI_0 CI_0
+
+[D20 | P08 | REPL] 없는 브랜치 오류
+switch missing
+
+[D21 | P08 | REPL] 없는 ID 오류
+path CI_0 missing
+
+[D22 | P08 | REPL] 잘못된 옵션 오류
+log --sort-by=hash
+
+[D23 | P09 | REPL] 날짜 정렬
+log --sort-by=date
+
+[D24 | P09 | REPL] 작성자 정렬
+log --sort-by=author
+
+[D25 | P09 | REPL] REPL 종료
+exit
+
+================================================================
+2. 본 시연 계속: 준비해 둔 T2로 이동
+================================================================
+
+[B01 | Python] 최단 경로 동률
+print(" -> ".join(find_shortest_path(commits, "h0", "h3")))
+
+[B02 | Python] 여러 부모의 조상
+print(find_ancestors(commits, "h3"))
+
+[B03 | Python] 여러 부모의 로그
+print(" -> ".join(topological_order(commits)))
+
+[B04 | Python] 작성자 정렬·안정성
+print([(c.hash, c.author) for c in insertion_sort(items, "author")])
+
+[B05 | Python] 날짜 정렬
+print([c.hash for c in insertion_sort(items, "date")])
+
+[B06 | Python] 다른 작성자 제외
+print(index.find_by_author("Alice"))
+
+[발표 후 | Python: T2] 인터프리터 종료
+quit()
+
+================================================================
+3. 추가 리허설: 필수 입력 경계 확인 (10분 대본에는 포함하지 않음)
+================================================================
+[셸: T1]
+python3 -B main.py
+
+[REPL] 초기화 전 오류 → 빈 저장소 → 오류 복구 → quit 종료
+log
+init "Alice Kim"
+log
+search nothing
+commit ""
+commit "Unclosed
+commit "Valid message"
+ancestors CI_0
+search absent
+search log
+search --author="alice kim"
+init Bob
+branch main
+log --sort-by=
+search --author=
+search login feature
+unknown
+exit now
+log
+quit
+
+닫히지 않은 따옴표 예시는 mini-git>에서만 입력한다. 셸에서 입력하면 셸이 추가 입력을 기다린다.
+quit와 exit는 모두 인자 없이 사용한다. Python >>>의 quit()와 혼동하지 않는다.
+
+================================================================
+4. 프로그램의 전체 명령 문법
+================================================================
+INIT <user_name>
+BRANCH <branch_name>
+SWITCH <branch_name>
+COMMIT <message>
+LOG
+LOG --sort-by=date
+LOG --sort-by=author
+PATH <commit1> <commit2>
+ANCESTORS <commit_hash>
+SEARCH <keyword>
+SEARCH --author=<name>
+EXIT
+QUIT
+
+<>는 설명용 자리표시자이며 실제 입력에 넣지 않는다.
+공백 포함 인자는 큰따옴표로 감싼다. 명령만 대소문자를 구분하지 않는다.
+SEARCH의 여러 단어는 AND 토큰 검색이며, 부분 문자열·구문 검색이 아니다.
+옵션은 --author=, --sort-by=의 명시된 표기를 사용한다.
+기본 LOG는 모든 커밋을 부모 우선으로, 정렬 LOG는 선택한 기준의 오름차순으로 출력한다.

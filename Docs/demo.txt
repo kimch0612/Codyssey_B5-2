@@ -1,0 +1,351 @@
+B5-2 Mini Git 평가 리허설
+작성 기준: Subject.txt / evaluate.txt / 현재 구현 (Git 75e37f5)
+기준 폴더: /Users/charles/Documents/Dev/Codyssey/Subject5/B5-2
+기준일: 2026-09-15. 코드가 바뀌면 아래 함수 이름으로 다시 찾아 라인을 확인한다.
+
+demo.txt — 입력 순서, 예상 결과, 설명 포인트
+
+[자료의 관계]
+cli.txt: 입력 목록 / demo.txt: 시연 해설 / script.txt: 10분 대본
+script2.txt: P01~P13별 상세 공부 / Images: 문단에서 보여 줄 도식
+
+[세 가지 자료 구분]
+A. 실제 CLI 이력: CI_0…CI_4. T1에서 D01~D25로 직접 생성한다.
+B. 내부 검증 데이터: h0, h1, h2, h3, hx. T2에서 객체로 준비한다.
+C. 조건 변경 가정: 부모 방향 PATH, 부모 우선+작성자 순서. 실제 구현 기능이 아니다.
+그림마다 A/B/C에 해당하는 표식을 붙였다. 서로 다른 데이터를 같은 실행 결과로 설명하지 않는다.
+
+================================================================
+0. 발표 전 준비 (10분 발표 시간 밖)
+================================================================
+1) 현재 위치에서 Python 3.10 이상을 사용한다. 이 환경에서는 python3가 동작한다.
+   셸에서 python3 --version으로 확인한다. 필요하면 실행 가능한 python3.11 등으로 바꾼다.
+2) 처음 시작하는 두 터미널 T1/T2를 연다. 입력 프롬프트를 확인한다.
+   운영체제 셸: cd / python3 실행 명령
+   Mini Git REPL: mini-git> (D 명령)
+   Python 인터프리터: >>> (준비 코드 및 B 명령)
+3) T2에서 cli.txt 0단계의 준비 코드를 순서대로 한 줄씩 입력한다.
+   items는 Commit 객체 목록, commits는 ID→객체 dict, index는 검증용 역색인이다.
+   준비 단계에서는 store_commit/COMMIT을 실행하지 않는다. 각 객체를 직접 만들어 색인에 등록한다.
+4) T1에서 cli.txt 1단계의 cd와 python3 -B main.py를 실행한다. INIT은 발표 P02에서 한다.
+5) 이미지를 파일명 순서가 아닌 script.txt의 문단 안내에 맞춰 연다.
+   01 구조 → 02 이력 → 03 LOG → 04 PATH → 05 색인 → 06 정렬 → 07 동률 → 08 조건 변경.
+   실제 대본에서는 07 다음에 06을 다시 보여 준다.
+6) 같은 세션에서 D03~D09를 반복하면 ID가 달라진다. 재시연은 exit 후 새 프로세스로 시작한다.
+   명령 시연 중 실제 시각은 달라진다. SEARCH와 집합 출력의 나열 순서는 정답 조건으로 고정하지 않는다.
+
+================================================================
+1. 실제 Mini Git REPL — D01~D25
+================================================================
+[D01] 초기화 | script P02 | 평가 1-1
+입력 위치: T1 mini-git>
+입력:
+    init "Alice Kim"
+기대·설명:
+    main 브랜치와 HEAD, 현재 사용자 Alice Kim이 설정된다. 아직 커밋은 없다.
+
+[D02] 빈 브랜치 보존 | script P02 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    branch archive
+기대·설명:
+    archive는 아직 None을 가리킨다. 나중에 분리된 루트를 만드는 준비다. HEAD는 main 그대로다.
+
+[D03] 루트 생성 | script P03 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    CoMmIt "Initial commit"
+기대·설명:
+    CI_0 생성. 부모는 []이고 main만 CI_0을 가리킨다. 혼합 대소문자 명령도 허용된다.
+
+[D04] 현재 커밋에서 분기 | script P03 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    branch feature
+기대·설명:
+    main과 feature가 같은 CI_0을 가리킨다. 현재 브랜치는 main이다.
+
+[D05] 작업 브랜치 전환 | script P03 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    switch feature
+기대·설명:
+    HEAD가 feature가 된다. 기존 커밋과 부모 관계는 그대로다.
+
+[D06] feature의 첫 커밋 | script P03 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    commit "Add LOGIN feature"
+기대·설명:
+    CI_1 생성. 부모는 [CI_0]. feature만 CI_1로 이동한다. 메시지의 LOGIN 원문은 보존된다.
+
+[D07] 이력을 한 단계 연장 | script P03 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    commit "Fix login"
+기대·설명:
+    CI_2 생성. 부모는 [CI_1]. feature는 CI_2를 가리킨다.
+
+[D08] main으로 복귀 | script P03 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    switch main
+기대·설명:
+    HEAD는 main이고 현재 커밋은 CI_0이다. 다음 커밋의 부모는 CI_2가 아니다.
+
+[D09] main의 별도 변경 | script P03 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    commit "Add payment feature"
+기대·설명:
+    CI_3 생성. 부모는 [CI_0]. main=CI_3, feature=CI_2, archive=None이다.
+
+[D10] 부모 우선 로그 | script P05 | 평가 1-3
+입력 위치: T1 mini-git>
+입력:
+    log
+기대·설명:
+    현재 구현의 ID 출력 순서: CI_0, CI_3, CI_1, CI_2. 필수 조건은 부모가 자식보다 먼저라는 점이며 형제 사이 순서는 자유다.
+
+[D11] 가지 사이 최단 경로 | script P06 | 평가 1-4
+입력 위치: T1 mini-git>
+입력:
+    path CI_2 CI_3
+기대·설명:
+    Path: CI_2 -> CI_1 -> CI_0 -> CI_3. 부모·자식 양쪽 이동을 허용하며 간선은 3개다.
+
+[D12] 조상 탐색 | script P06 | 평가 1-5
+입력 위치: T1 mini-git>
+입력:
+    ancestors CI_2
+기대·설명:
+    CI_0, CI_1의 로그가 출력된다. CI_2 자신과 다른 가지 CI_3은 포함하지 않는다.
+
+[D13] 대소문자 정규화 검색 | script P07 | 평가 1-6
+입력 위치: T1 mini-git>
+입력:
+    search LOGIN
+기대·설명:
+    결과 집합은 {CI_1, CI_2}. 메시지에는 LOGIN/login이 섞여 있어도 둘 다 찾는다. 출력 순서는 고정하지 않는다.
+
+[D14] 여러 토큰 AND 검색 | script P07 | 평가 1-6
+입력 위치: T1 mini-git>
+입력:
+    search "login feature"
+기대·설명:
+    CI_1만 출력된다. login과 feature를 모두 가진 커밋이다.
+
+[D15] 공백 있는 작성자 검색 | script P07 | 평가 1-6
+입력 위치: T1 mini-git>
+입력:
+    search --author="Alice Kim"
+기대·설명:
+    CI_0, CI_1, CI_2, CI_3이 각각 한 번 나온다. 순서는 자유다.
+
+[D16] 빈 브랜치로 전환 | script P08 | 평가 1-2
+입력 위치: T1 mini-git>
+입력:
+    switch archive
+기대·설명:
+    HEAD=archive, archive가 가리키는 커밋은 아직 None이다.
+
+[D17] 분리된 루트 생성 | script P08 | 평가 1-4
+입력 위치: T1 mini-git>
+입력:
+    commit "Separate history"
+기대·설명:
+    CI_4 생성. 부모는 []. archive=CI_4이고 기존 이력과 간선이 없다.
+
+[D18] 연결되지 않은 두 커밋 | script P08 | 평가 1-4
+입력 위치: T1 mini-git>
+입력:
+    path CI_0 CI_4
+기대·설명:
+    No path. 두 ID는 모두 존재하지만 연결이 없다.
+
+[D19] 자기 자신으로 가는 경로 | script P08 | 평가 1-4
+입력 위치: T1 mini-git>
+입력:
+    path CI_0 CI_0
+기대·설명:
+    Path: CI_0. 간선 수는 0이다.
+
+[D20] 없는 브랜치 오류 | script P08 | 평가 CLI 공통 규칙
+입력 위치: T1 mini-git>
+입력:
+    switch missing
+기대·설명:
+    [오류] 존재하지 않는 브랜치입니다: missing. HEAD는 archive로 유지된다.
+
+[D21] 없는 ID 오류 | script P08 | 평가 CLI 공통 규칙
+입력 위치: T1 mini-git>
+입력:
+    path CI_0 missing
+기대·설명:
+    [오류] 존재하지 않는 End Commit ID로 조회를 시도했습니다: missing. No path와 구분한다.
+
+[D22] 잘못된 옵션 오류 | script P08 | 평가 CLI 공통 규칙
+입력 위치: T1 mini-git>
+입력:
+    log --sort-by=hash
+기대·설명:
+    [오류] 잘못된 정렬 기준값이 들어왔습니다. 프로그램은 계속 입력을 받는다.
+
+[D23] 날짜 정렬 | script P09 | 평가 1-6
+입력 위치: T1 mini-git>
+입력:
+    log --sort-by=date
+기대·설명:
+    보통 시각 증가 순서인 CI_0, CI_1, CI_2, CI_3, CI_4. 시스템 시계가 역행하면 실제 timestamp 오름차순이 기준이며, 동률은 입력 순서를 유지한다.
+
+[D24] 작성자 정렬 | script P09 | 평가 1-6
+입력 위치: T1 mini-git>
+입력:
+    log --sort-by=author
+기대·설명:
+    모두 Alice Kim이므로 CI_0, CI_1, CI_2, CI_3, CI_4. 이 실행만으로 서로 다른 작성자의 정렬을 증명할 수 없어 B04에서 보완한다.
+
+[D25] REPL 종료 | script P09 | 평가 REPL
+입력 위치: T1 mini-git>
+입력:
+    exit
+기대·설명:
+    운영체제 셸 프롬프트로 돌아온다. 이 세션의 메모리 데이터는 사라진다.
+
+[D09 직후 실제 이력 표]
+ID     부모       메시지                    브랜치 위치
+CI_0   []         Initial commit            -
+CI_1   [CI_0]     Add LOGIN feature         -
+CI_2   [CI_1]     Fix login                 feature
+CI_3   [CI_0]     Add payment feature       main (HEAD)
+아직 archive=None. 모든 작성자는 Alice Kim이다.
+
+[D17 이후]
+CI_4   []         Separate history          archive (HEAD)
+main=CI_3, feature=CI_2는 유지된다. archive는 CI_0에서 분기한 브랜치가 아니다.
+처음 아무 커밋도 없을 때 archive를 만들었기 때문에 독립적인 첫 커밋을 만들 수 있다.
+
+================================================================
+2. 내부 함수 검증 — B01~B06 (T2 >>>)
+================================================================
+이 데이터는 CHECK.md 12단계 표를 그대로 사용한다. 시각은 t0+분으로 고정했다.
+ID  부모      author timestamp          message
+h0  []        Zoe    2024-01-01 09:01  Initial commit
+h1  [h0]      Alice  2024-01-01 09:03  Add login feature
+h2  [h0]      Bob    2024-01-01 09:02  Fix login
+h3  [h1,h2]   Alice  2024-01-01 09:04  Ship login login
+hx  []        Evan   2024-01-01 09:00  Separate history
+items와 commits의 초기 나열 순서: h0, h1, h2, h3, hx.
+
+필수 COMMIT은 부모를 0개 또는 1개만 만든다. parents 자료형과 그래프 함수가 여러 부모를
+지원하는지는 이 검증으로 보완한다. 보너스 merge를 구현했다고 설명하지 않는다.
+작성자도 INIT 한 번으로 고정되므로, 다양한 작성자 정렬·검색은 이 검증 데이터를 쓴다.
+
+[B01] 최단 경로 동률
+입력 위치: T2 >>>
+입력:
+    print(" -> ".join(find_shortest_path(commits, "h0", "h3")))
+기대:
+    h0 -> h1 -> h3
+설명:
+    후보 h0->h1->h3과 h0->h2->h3은 모두 간선 2개다. 전체 문자열의 사전순으로 h1 경유를 고른다.
+
+[B02] 여러 부모의 조상
+입력 위치: T2 >>>
+입력:
+    print(find_ancestors(commits, "h3"))
+기대:
+    {h0, h1, h2} 집합. 출력 순서는 자유.
+설명:
+    두 부모에서 공통 조상 h0에 도달해도 집합으로 중복을 막는다. h3과 hx는 조상이 아니다.
+
+[B03] 여러 부모의 로그
+입력 위치: T2 >>>
+입력:
+    print(" -> ".join(topological_order(commits)))
+기대:
+    hx -> h0 -> h2 -> h1 -> h3
+설명:
+    처음 ready=[h0,hx]에서 끝의 hx부터 꺼낸 결과다. h3은 h1·h2 뒤에만 나온다. hx의 위치는 명세가 고정하지 않는다.
+
+[B04] 작성자 정렬·안정성
+입력 위치: T2 >>>
+입력:
+    print([(c.hash, c.author) for c in insertion_sort(items, "author")])
+기대:
+    [('h1', 'Alice'), ('h3', 'Alice'), ('h2', 'Bob'), ('hx', 'Evan'), ('h0', 'Zoe')]
+설명:
+    h1과 h3의 author가 같으므로 원래 h1→h3 순서를 유지한다. author 정렬이 부모 우선까지 지킬 필요는 없다.
+
+[B05] 날짜 정렬
+입력 위치: T2 >>>
+입력:
+    print([c.hash for c in insertion_sort(items, "date")])
+기대:
+    ['hx', 'h0', 'h2', 'h1', 'h3']
+설명:
+    날짜가 입력 순서와 다르게 섞여 있어 정렬 기준이 실제로 작동하는지 볼 수 있다.
+
+[B06] 다른 작성자 제외
+입력 위치: T2 >>>
+입력:
+    print(index.find_by_author("Alice"))
+기대:
+    {h1, h3} 집합. 출력 순서는 자유.
+설명:
+    Bob·Zoe·Evan의 커밋을 제외한다. 색인의 집합 순서는 자유다.
+
+발표 후 T2에서 quit()로 종료한다. main.py REPL의 quit와 다른 Python 문법이다.
+
+================================================================
+3. 추가 리허설 (cli.txt 3단계)
+================================================================
+- 초기화 전 log: 초기화 오류.
+- INIT 후 빈 log/search: 아무 결과 줄 없이 다음 프롬프트.
+- 빈 메시지와 닫히지 않은 따옴표: 오류 후 다음 명령 수용.
+- Valid message만 실제 CI_0을 만든다. 실패한 COMMIT은 ID를 소비하지 않는다.
+- ancestors CI_0: 루트이므로 빈 결과.
+- 없는 키워드·다른 대소문자의 작성자: 빈 결과.
+- 반복 INIT, main 중복 BRANCH: 오류, 기존 상태 보존.
+- 빈 옵션 값, 인자 초과, unknown, exit now: 오류 후 계속 실행.
+- 마지막 log에는 CI_0 하나가 남아 있고 quit로 종료한다.
+
+EOF/Ctrl-D 종료는 현재 별도 처리하지 않는다. 이 리허설의 정상 종료는 exit/quit를 사용한다.
+기본 LOG 순서, 검색 결과 집합, 오류 후 상태 보존을 기준으로 확인한다.
+
+================================================================
+4. 평가 문항별 안내
+================================================================
+1-1: D01 / P02
+1-2: D02~D09, D16~D17 / P03
+1-3: D10, B03 / P05, P10
+1-4: D11, D18~D19, B01 / P06, P08, P10
+1-5: D12, B02 / P06, P10
+1-6: D13~D15, D23~D24, B04~B06 / P07, P09, P11
+2-1: P01~P03  2-2: P04  2-3: P03·P07  2-4: P01·P05  2-5: P01·P13
+3-1: P04  3-2: P05  3-3: P06·P10  3-4: P11  3-5: P07·P11
+4-1: P12  4-2: P12  4-3: P13  4-4: P13
+
+문항 2~4는 말로 설명할 수 있는지 확인하는 평가다. 명령 출력만으로 통과를 확정하지 않는다.
+이번 자료는 README를 대체하지 않는다. README는 Subject.txt에 있는 별도 필수 제출물이다.
+
+================================================================
+5. 이미지 안내 — Docs/Images
+================================================================
+모든 그림은 1920×1080 PNG와 같은 이름의 SVG 두 형식으로 제공한다.
+PNG는 발표용으로 바로 열고, SVG는 글자나 선을 크게 확대할 때 사용한다.
+두 형식은 같은 내용이므로 하나만 띄우면 된다.
+
+01_repository             P01~P02    D09 완성 상태를 미리 보여 주는 자료구조 예시
+02_commit_graph           P03~P04·P08 D09의 분기와 D17의 별도 루트
+03_log_kahn               P05        D10의 ready와 누적 LOG 결과
+04_path_bfs               P06        D11 거리 감소 경로와 D12 조상 집합
+05_inverted_index         P07        D13~D15의 실제 토큰·작성자 색인
+06_insertion_sort         P09·P11    h0…hx의 작성자 삽입 정렬 단계
+07_path_tie               P10        h0→h3 최단 경로 동률 선택
+08_direction_and_constraints P12~P13 부모 방향 PATH와 작성자 우선순위의 조건 변경
+
+예: 03_log_kahn.png와 03_log_kahn.svg는 같은 그림이다.
+01의 CI_3은 INIT 직후 값이 아니다. P02에서는 터미널의 실제 초기화 결과를 기준으로 설명한다.
+02의 왼쪽·오른쪽은 서로 다른 시점이다. 각 패널의 D09/D17 표기를 함께 보여 준다.
+06·07은 내부 검증 데이터이고, 08은 평가 질문의 가정이다.
