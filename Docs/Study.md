@@ -573,6 +573,28 @@ COMMIT "Add login feature"
 
 입력 전체에 단순 공백 분리만 적용하면 따옴표 안의 공백까지 나뉜다. **명령행을 파싱하는 규칙**과 **커밋 메시지에서 검색 토큰을 추출하는 규칙**은 서로 다르다는 점을 이해해야 한다.
 
+### 구현 연습: 명령행 한 줄을 토큰으로 나누기
+
+Python 표준 라이브러리의 `shlex.split()`은 따옴표 안의 공백을 보존하면서
+명령행을 문자열 목록으로 나눈다. 따옴표 문자는 인자를 묶는 문법이므로 결과
+문자열에는 남지 않는다.
+
+| 입력 `line: str` | `shlex.split(line)` 결과 `list[str]` |
+| --- | --- |
+| `init "Alice Kim"` | `['init', 'Alice Kim']` |
+| `CoMmIt "Add login feature"` | `['CoMmIt', 'Add login feature']` |
+| `SEARCH --author="Alice Kim"` | `['SEARCH', '--author=Alice Kim']` |
+| 공백만 있는 입력 | `[]` |
+
+명령어의 대소문자만 무시해야 하므로 결과가 비어 있지 않다면 첫 원소만
+`upper()`로 바꾼다. 예를 들어 `['CoMmIt', 'Add Login']`은
+`['COMMIT', 'Add Login']`이 된다. 메시지 `Add Login`까지 대문자나 소문자로
+바꾸면 원문 보존 요구를 어기므로 나머지 원소는 그대로 둔다.
+
+닫히지 않은 따옴표가 들어오면 `shlex.split()`은 `ValueError`를 발생시킨다.
+첫 파싱 함수에서는 이 오류를 숨기지 않고 전달하고, 이후 REPL 오류 처리에서
+잡아 `Invalid args`를 출력한 뒤 다음 입력을 받도록 연결할 수 있다.
+
 옵션 형태는 `SEARCH --author=<name>`과 `LOG --sort-by=date|author`다. 여기서 `date|author`는 허용 값 두 개를 뜻하며, 실제로는 `--sort-by=date` 또는 `--sort-by=author`를 입력한다.
 
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.

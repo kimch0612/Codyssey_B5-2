@@ -1,7 +1,17 @@
 # REPL, 명령 파싱, 입력 검증, 명령 실행 연결, 결과 출력 담당
+import shlex
+
 from commit import Commit
 from sorting import insertion_sort
 
+
+def parse_command_line(line: str) -> list[str]:
+    """따옴표를 고려해 명령행을 나누고 명령어만 대문자로 정규화한다."""
+    line = shlex.split(line) # 'CoMmIt "Add login feature"' -> ['CoMmIt', 'Add login feature']
+    if line:
+        line[0] = line[0].upper()
+    
+    return line
 
 def format_log(
     commits: dict[str, Commit],
