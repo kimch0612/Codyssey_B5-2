@@ -205,18 +205,21 @@ def run_repl() -> None:
     repository = Repository()
 
     while True:
-        line = input("mini-git> ")
-        parts = parse_command_line(line)
+        try:
+            line = input("mini-git> ")
+            parts = parse_command_line(line)
 
-        if parts == []:
-            continue
-        elif parts[0] in ("EXIT", "QUIT"):
-            validate_argument_count(parts)
-            break
-        else:
-            result = execute_command(repository, parts)
-            if result:
-                print(result)
+            if parts == []:
+                continue
+            elif parts[0] in ("EXIT", "QUIT"):
+                validate_argument_count(parts)
+                break
+            else:
+                result = execute_command(repository, parts)
+                if result:
+                    print(result)
+        except ValueError as e:
+            print(f"[오류] {e}")
 
 if __name__ == "__main__":
     run_repl()
