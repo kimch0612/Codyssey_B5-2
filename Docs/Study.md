@@ -733,6 +733,34 @@ Repository 메서드가 상태 변경 전에 `ValueError`로 거부하므로 같
 명령 실행 함수에 다시 작성할 필요는 없다. 사용자에게 보여 줄 최종 오류 문구에
 대상 브랜치 이름을 넣는 작업은 REPL 오류 처리 단계에서 연결한다.
 
+### COMMIT 연결
+
+파싱된 `COMMIT "Add login feature"`는 `['COMMIT', 'Add login feature']`가
+된다. `parts[1]`은 메시지 원문이며, 검색 키워드처럼 다시 토큰으로 나누거나
+소문자로 바꾸지 않는다. 빈 문자열이나 공백뿐인 메시지는 실제 내용이 없으므로
+명령 실행 단계에서 `ValueError`로 거부한다.
+
+```text
+message: 'Add login feature'   str
+              ↓ repository.create_commit(message)
+new_commit: Commit 객체
+              ├─ hash: 'CI_0'          str
+              ├─ message: 원문          str
+              ├─ author: 현재 사용자    str
+              └─ parents: 부모 ID 목록  list[str]
+```
+
+`Repository.create_commit()`은 ID 생성, 부모 결정, 저장, 현재 브랜치 이동,
+작성자·키워드 색인 갱신까지 이미 담당한다. `execute_command()`은 이 상태 변경을
+직접 반복하지 않고 메서드를 한 번 호출한 뒤 반환된 `Commit` 객체의 값을 출력용
+문자열에 연결한다.
+
+명세 예시 `[main CI_0] Initial commit`처럼 현재 브랜치 이름,
+`new_commit.hash`, `new_commit.message`를 식별할 수 있게 반환하면 된다. 초기화 전
+COMMIT은 `Repository.create_commit()`이 상태 변경 없이 `ValueError`로 거부한다.
+성공한 뒤에는 `repository.branches[repository.head]`, 저장소 딕셔너리의 키,
+두 역색인이 모두 같은 새 커밋 ID를 가리켜야 한다.
+
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.
 
 탐색·정렬·인덱싱을 독립된 함수 또는 클래스로 나누면, 입력을 읽는 과정과 알고리즘이 결과를 만드는 과정을 구분해서 설명할 수 있다. 엔트리 포인트 1개라는 제출 조건이 모든 로직을 한 함수에 넣으라는 뜻은 아니다. 특정 클래스 수나 파일 수는 명세에서 정하지 않는다.

@@ -81,7 +81,7 @@ def execute_command(repository: Repository, parts: list[str]) -> str:
         user_name = parts[1]
         if not user_name.strip():
             raise ValueError("사용자 이름이 비어 있습니다.")
-            
+
         repository.initialize(user_name)
         return f"Initialized repository.\nCurrent branch: {repository.head}\nCurrent user: {repository.current_user}"
 
@@ -100,6 +100,14 @@ def execute_command(repository: Repository, parts: list[str]) -> str:
         
         repository.switch_branch(branch_name)
         return f"Branch switched: {repository.head}"
+
+    if command == "COMMIT":
+        commit_message = parts[1]
+        if not commit_message.strip():
+            raise ValueError("커밋 메시지가 비어있습니다.")
+
+        commit = repository.create_commit(commit_message)
+        return f"[{repository.head} {commit.hash}] {commit.message}"
 
     raise NotImplementedError("아직 연결하지 않은 명령입니다.")
 

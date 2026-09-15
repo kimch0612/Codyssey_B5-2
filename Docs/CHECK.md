@@ -239,7 +239,7 @@ CLI를 연결하기 전에는 함수·객체에 작은 데이터를 직접 넣�
 
 - [x] `INIT <user_name>` → 초기화 결과를 출력한다.
 - [x] `BRANCH <branch_name>` / `SWITCH <branch_name>` → 생성·전환 결과를 출력한다.
-- [ ] `COMMIT <message>` → 생성 결과에 새 커밋 hash를 포함한다.
+- [x] `COMMIT <message>` → 생성 결과에 새 커밋 hash를 포함한다.
 - [ ] `LOG` / `LOG --sort-by=date|author` → 기본·정렬 로그를 출력한다.
 - [ ] `PATH <commit1> <commit2>` → 경로 또는 `No path`를 출력한다.
 - [ ] `ANCESTORS <commit_hash>` → 조상 목록을 출력한다.
