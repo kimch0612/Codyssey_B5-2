@@ -109,7 +109,7 @@ class Repository:
             raise ValueError("Repository가 초기화되지 않았습니다.")
 
         if branch_name in self.branches:
-            raise ValueError("이미 존재하는 브랜치 이름입니다.")
+            raise ValueError(f"이미 존재하는 브랜치 이름입니다: {branch_name}")
         
         self.branches[branch_name] = self.branches[self.head]
 
@@ -119,6 +119,6 @@ class Repository:
             raise ValueError("Repository가 초기화되지 않았습니다.")
 
         if branch_name not in self.branches:
-            raise ValueError("존재하지 않는 브랜치로 전환을 시도했습니다.")
+            raise ValueError(f"존재하지 않는 브랜치입니다: {branch_name}")
         
         self.head = branch_name
