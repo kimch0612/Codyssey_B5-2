@@ -597,6 +597,28 @@ Python 표준 라이브러리의 `shlex.split()`은 따옴표 안의 공백을 �
 
 옵션 형태는 `SEARCH --author=<name>`과 `LOG --sort-by=date|author`다. 여기서 `date|author`는 허용 값 두 개를 뜻하며, 실제로는 `--sort-by=date` 또는 `--sort-by=author`를 입력한다.
 
+`SEARCH --author="Alice Kim"`을 `shlex.split()`으로 나누면 두 번째 토큰은
+`'--author=Alice Kim'`이다. 이 문자열에서 `--author=`는 옵션 종류를 나타내는
+접두사이고, 그 뒤의 `Alice Kim`이 실제 작성자 이름이다.
+
+```text
+option: '--author=Alice Kim'  (str)
+         └─ 접두사 ─┘└ 이름 ┘
+                       ↓
+author: 'Alice Kim'           (str)
+```
+
+먼저 `startswith('--author=')`로 정확한 접두사인지 확인한 다음,
+`len('--author=')` 위치부터 문자열을 잘라 이름을 얻을 수 있다. 접두사가
+다르거나 뒤의 이름이 비어 있으면 내부 함수에서는 `ValueError`로 거부한다.
+작성자 이름은 검색 색인의 키와 같아야 하므로 `lower()`나 `upper()`를 적용하지
+않고 원문 그대로 반환한다.
+
+이때 내부 `ValueError`의 메시지는 한국어여도 된다. `Subject.txt`의 에러 메시지
+표준화 규칙은 CLI에서 사용자에게 보여 주는 안내에 적용한다. 이후 명령 실행·
+REPL 계층에서 옵션 파싱의 `ValueError`를 잡아 `Invalid args`처럼 일관된 문구를
+출력하면 된다. 내부 예외 문구와 최종 CLI 출력 문구를 같은 것으로 간주하지 않는다.
+
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.
 
 탐색·정렬·인덱싱을 독립된 함수 또는 클래스로 나누면, 입력을 읽는 과정과 알고리즘이 결과를 만드는 과정을 구분해서 설명할 수 있다. 엔트리 포인트 1개라는 제출 조건이 모든 로직을 한 함수에 넣으라는 뜻은 아니다. 특정 클래스 수나 파일 수는 명세에서 정하지 않는다.

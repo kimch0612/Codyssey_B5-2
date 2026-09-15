@@ -13,6 +13,17 @@ def parse_command_line(line: str) -> list[str]:
     
     return line
 
+def parse_author_option(option: str) -> str:
+    """`--author=<name>` 옵션에서 작성자 이름을 꺼내 반환한다."""
+    prefix = "--author="
+    if option.startswith(prefix):
+        author = option[len(prefix):]
+        if not author.strip():
+            raise ValueError("이름이 비어있습니다.")
+        return author
+    else:
+        raise ValueError("잘못된 옵션값이 들어왔습니다.. 이게 가능한 일인가?")
+
 def format_log(
     commits: dict[str, Commit],
     ordered_ids: list[str],
