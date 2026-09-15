@@ -761,6 +761,39 @@ COMMIT은 `Repository.create_commit()`이 상태 변경 없이 `ValueError`로 �
 성공한 뒤에는 `repository.branches[repository.head]`, 저장소 딕셔너리의 키,
 두 역색인이 모두 같은 새 커밋 ID를 가리켜야 한다.
 
+### 기본 LOG와 정렬 LOG 연결
+
+초기화 전 LOG는 저장소 사용 준비가 되지 않은 상태이므로 `ValueError`로
+거부한다. 반면 INIT은 완료됐지만 커밋이 없는 저장소는 유효한 빈 저장소다.
+이때 두 종류의 LOG는 기존 포맷 함수의 계약에 따라 빈 문자열을 반환한다.
+
+기본 LOG와 옵션 LOG는 순서를 만드는 규칙이 다르다.
+
+```text
+LOG
+→ topological_order(repository.commits)
+→ 부모가 자식보다 앞선 ordered_ids: list[str]
+→ format_log(repository.commits, ordered_ids)
+
+LOG --sort-by=date|author
+→ parse_sort_option(parts[1])
+→ sort_by: 'date' 또는 'author'
+→ format_sorted_log(repository.commits, sort_by)
+```
+
+기본 LOG에서 `topological_order()`가 반환하는 것은 `Commit` 객체 목록이 아니라
+커밋 ID 문자열 목록이다. `format_log()`는 저장소 딕셔너리에서 각 ID의 객체를
+조회해 hash·author·timestamp·message를 문자열로 만든다.
+
+옵션이 있는지는 `len(parts)`로 구분할 수 있다. `['LOG']`는 길이 1이고,
+`['LOG', '--sort-by=date']`는 길이 2다. 인자 개수는 앞의
+`validate_argument_count()`가 이미 검사했으므로 그 밖의 길이는 LOG 분기까지
+도달하지 않는다.
+
+정렬 LOG는 기존 `format_sorted_log()`를 그대로 사용한다. 기본 LOG의 부모 우선
+규칙까지 함께 적용하지 않는다. 평가 4-3은 작성자 정렬에 부모-자식 선후 조건이
+추가로 강화되는 상황을 묻기 때문에, 현재 필수 기능에서는 두 정렬 기준만 따른다.
+
 입력 개수나 옵션 형식이 잘못된 상황과, 형식은 맞지만 대상 브랜치·커밋이 없는 상황을 구분한다. 명세는 최소 에러 메시지의 예로 `Invalid args`, `Unknown branch: <name>`, `Unknown commit: <hash>`를 제시한다.
 
 탐색·정렬·인덱싱을 독립된 함수 또는 클래스로 나누면, 입력을 읽는 과정과 알고리즘이 결과를 만드는 과정을 구분해서 설명할 수 있다. 엔트리 포인트 1개라는 제출 조건이 모든 로직을 한 함수에 넣으라는 뜻은 아니다. 특정 클래스 수나 파일 수는 명세에서 정하지 않는다.
